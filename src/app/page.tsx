@@ -166,6 +166,64 @@ export default function Home() {
     }
   }
 
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    if (!confirm(`Are you sure you want to delete user "${userName}"? This will fail if the user has any expenses.`)) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: "DELETE"
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "User deleted successfully"
+        })
+        fetchData()
+      } else {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to delete user")
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete user",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleDeleteExpense = async (expenseId: string, expenseDescription: string) => {
+    if (!confirm(`Are you sure you want to delete expense "${expenseDescription}"?`)) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/expenses/${expenseId}`, {
+        method: "DELETE"
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Expense deleted successfully"
+        })
+        fetchData()
+      } else {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to delete expense")
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete expense",
+        variant: "destructive"
+      })
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -283,13 +341,22 @@ export default function Home() {
                   {expenses.map((expense) => (
                     <div key={expense.id} className="border rounded-lg p-4">
                       <div className="flex justify-between items-start mb-2">
-                        <div>
+                        <div className="flex-1">
                           <h3 className="font-semibold">{expense.description}</h3>
                           <p className="text-sm text-gray-600">
                             Paid by {expense.paidBy.name} • {new Date(expense.createdAt).toLocaleDateString()}
                           </p>
                         </div>
-                        <Badge variant="secondary">₹{expense.amount.toFixed(2)}</Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">₹{expense.amount.toFixed(2)}</Badge>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteExpense(expense.id, expense.description)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
                       </div>
                       <div className="text-sm text-gray-600">
                         <p>Split with: {expense.participants.map(p => p.user.name).join(", ")}</p>
@@ -304,33 +371,68 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Balance Summary */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Balance Summary</CardTitle>
-          <CardDescription>Who owes whom</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {balances.length === 0 ? (
-            <p className="text-center text-gray-500 py-4">All settled up! No outstanding balances.</p>
-          ) : (
-            <div className="space-y-3">
-              {balances.map((balance, index) => {
-                const fromUser = users.find(u => u.id === balance.from)
-                const toUser = users.find(u => u.id === balance.to)
-                return (
-                  <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <span className="font-medium">
-                      {fromUser?.name} owes {toUser?.name}
-                    </span>
-                    <Badge variant="destructive">₹{balance.amount.toFixed(2)}</Badge>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        {/* Balance Summary */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Balance Summary</CardTitle>
+            <CardDescription>Who owes whom</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {balances.length === 0 ? (
+              <p className="text-center text-gray-500 py-4">All settled up! No outstanding balances.</p>
+            ) : (
+              <div className="space-y-3">
+                {balances.map((balance, index) => {
+                  const fromUser = users.find(u => u.id === balance.from)
+                  const toUser = users.find(u => u.id === balance.to)
+                  return (
+                    <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                      <span className="font-medium">
+                        {fromUser?.name} owes {toUser?.name}
+                      </span>
+                      <Badge variant="destructive">₹{balance.amount.toFixed(2)}</Badge>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Users Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Users Management</CardTitle>
+            <CardDescription>Manage users in the expense splitter</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {users.length === 0 ? (
+              <p className="text-center text-gray-500 py-4">No users yet. Add your first user!</p>
+            ) : (
+              <div className="space-y-3">
+                {users.map((user) => (
+                  <div key={user.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <span className="font-medium">{user.name}</span>
+                      {user.email && (
+                        <p className="text-sm text-gray-600">{user.email}</p>
+                      )}
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteUser(user.id, user.name)}
+                    >
+                      Delete
+                    </Button>
                   </div>
-                )
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
