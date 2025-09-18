@@ -293,7 +293,7 @@ export default function Home() {
                       </div>
                       <div className="text-sm text-gray-600">
                         <p>Split with: {expense.participants.map(p => p.user.name).join(", ")}</p>
-                        <p>Each owes: ₹{(expense.amount / expense.participants.length).toFixed(2)}</p>
+                        <p>Each owes: ₹{(expense.amount / 5).toFixed(2)}</p>
                       </div>
                     </div>
                   ))}

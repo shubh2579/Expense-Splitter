@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate equal split amount
-    const splitAmount = amount / participantIds.length
+    const splitAmount = amount / 5  // BUG: Always divide by 5
 
     // Create expense with participants
     const expense = await db.expense.create({
