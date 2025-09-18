@@ -86,7 +86,7 @@ jobs:
       run: npm ci
 
     - name: Security audit
-      run: npm audit --audit-level moderate
+      run: npm audit --audit-level high
 
     - name: Check for secrets
       uses: trufflesecurity/trufflehog@main
@@ -97,7 +97,7 @@ jobs:
 
     - name: Dependency vulnerability scan
       run: |
-        npx audit-ci --moderate
+        npx audit-ci --high
 
     - name: SAST Security Scan
       run: |
