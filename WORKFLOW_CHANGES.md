@@ -1,8 +1,8 @@
-# Workflow Changes - bugfix/expsplit-015-expense-validation
+# Workflow Changes - bugfix/expsplit-015-general-investigation
 
 ## Issue Analysis
 - **Category**: general
-- **Files Modified**: src/app/api/expenses/route.ts, src/app/page.tsx
+- **Files Modified**: 
 - **Fixes Applied**: 1
 
 ## Code Review Status
