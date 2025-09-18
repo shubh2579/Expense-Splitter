@@ -1,8 +1,8 @@
-# Workflow Changes - bugfix/expsplit-015-expense-validation
+# Workflow Changes - bugfix/expsplit-015-balance-calculation
 
 ## Issue Analysis
-- **Category**: general
-- **Files Modified**: src/app/api/expenses/route.ts, src/app/page.tsx
+- **Category**: financial_calculation
+- **Files Modified**: 
 - **Fixes Applied**: 1
 
 ## Code Review Status
