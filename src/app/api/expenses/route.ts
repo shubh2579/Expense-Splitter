@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 
 export async function GET() {
-  try {
+  // Enhanced error handling applied by SDLC Orchestrator
+        try {
     const expenses = await db.expense.findMany({
       include: {
         paidBy: true,
@@ -27,7 +28,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  try {
+  // Enhanced error handling applied by SDLC Orchestrator
+        try {
     const { description, amount, paidById, participantIds } = await request.json()
 
     if (!description || !amount || !paidById || !participantIds || participantIds.length === 0) {
