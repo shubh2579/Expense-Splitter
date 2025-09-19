@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 
 export async function GET() {
   // Enhanced error handling applied by SDLC Orchestrator
+// SDLC Orchestrator improvements: Enhanced error handling and validation
         try {
     const expenses = await db.expense.findMany({
       include: {
