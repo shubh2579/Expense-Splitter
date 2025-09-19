@@ -62,9 +62,9 @@ jobs:
             body: '✅ Claude Code Review completed successfully!\n\n- Linting: Passed\n- Type Check: Passed\n- Tests: Passed\n- Code Quality: Approved'
           })
 
+  # Security testing is now OPTIONAL - only runs when explicitly requested with '/security-testing' comment
   security-testing:
     if: |
-      github.event_name == 'pull_request' ||
       (github.event_name == 'issue_comment' &&
        github.event.issue.pull_request &&
        contains(github.event.comment.body, '/security-testing'))
@@ -118,7 +118,7 @@ jobs:
           })
 
   auto-merge:
-    needs: [claude-review, security-testing]
+    needs: [claude-review]
     if: |
       github.event_name == 'issue_comment' &&
       contains(github.event.comment.body, '/auto-merge') &&
