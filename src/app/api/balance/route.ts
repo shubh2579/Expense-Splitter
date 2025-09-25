@@ -36,10 +36,13 @@ export async function GET() {
     expenses.forEach(expense => {
       // The person who paid gets the full amount added to their balance
       netBalances[expense.paidById] += expense.amount
-      
-      // Each participant owes their share
+
+      // Calculate correct split amount (in case old expenses have wrong stored amounts)
+      const correctSplitAmount = expense.amount / expense.participants.length
+
+      // Each participant owes their equal share
       expense.participants.forEach(participant => {
-        netBalances[participant.userId] -= participant.amount
+        netBalances[participant.userId] -= correctSplitAmount
       })
     })
 
