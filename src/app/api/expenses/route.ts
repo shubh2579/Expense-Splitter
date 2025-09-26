@@ -34,7 +34,15 @@ export async function POST(request: NextRequest) {
 
     if (!description || !amount || !paidById || !participantIds || participantIds.length === 0) {
       return NextResponse.json(
-        { error: "All fields are required" },
+        { error: "All fields are required and at least one participant is needed" },
+        { status: 400 }
+      )
+    }
+
+    // Additional validation for positive amount
+    if (amount <= 0) {
+      return NextResponse.json(
+        { error: "Amount must be greater than 0" },
         { status: 400 }
       )
     }
@@ -74,4 +82,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}// BUG INTRODUCED: Expenses always split by 5 people instead of actual participant count
+}

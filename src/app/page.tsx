@@ -9,6 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { Bug, Send } from "lucide-react"
 
 interface User {
   id: string
@@ -43,14 +46,25 @@ export default function Home() {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [balances, setBalances] = useState<Balance[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  
+
   const [newExpense, setNewExpense] = useState({
     description: "",
     amount: "",
     paidById: "",
     participantIds: [] as string[]
   })
-  
+
+  // Bug report functionality
+  const [bugReport, setBugReport] = useState({
+    description: "",
+    priority: "medium",
+    steps: "",
+    expected: "",
+    actual: ""
+  })
+  const [isReportingBug, setIsReportingBug] = useState(false)
+  const [bugDialogOpen, setBugDialogOpen] = useState(false)
+
   const { toast } = useToast()
 
   useEffect(() => {
@@ -224,6 +238,74 @@ export default function Home() {
     }
   }
 
+  const handleBugReport = async () => {
+    if (!bugReport.description.trim()) {
+      toast({
+        title: "Error",
+        description: "Please describe the bug you encountered",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setIsReportingBug(true)
+
+    try {
+      // Send bug report to SDLC orchestrator
+      const response = await fetch('/api/bug-report', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ...bugReport,
+          projectPath: '/mnt/c/Users/shubhendusharma/Downloads/claude_code_sdlc/projects/Expense-Splitter',
+          reportedAt: new Date().toISOString(),
+          appName: 'Expense Splitter',
+          userAgent: navigator.userAgent
+        })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+
+        toast({
+          title: "Bug Report Submitted! 🐛",
+          description: `Report ID: ${result.reportId}. Our AI agents will analyze and fix this issue.`,
+        })
+
+        // Reset form and close dialog
+        setBugReport({
+          description: "",
+          priority: "medium",
+          steps: "",
+          expected: "",
+          actual: ""
+        })
+        setBugDialogOpen(false)
+
+        // Show success message
+        setTimeout(() => {
+          toast({
+            title: "🤖 AI Workflow Initiated",
+            description: "Check the SDLC Dashboard for real-time progress!",
+          })
+        }, 2000)
+
+      } else {
+        throw new Error("Failed to submit bug report")
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit bug report. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsReportingBug(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -236,7 +318,110 @@ export default function Home() {
     <div className="container mx-auto p-6 max-w-6xl">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Expense Splitter</h1>
-        <Button onClick={handleAddUser}>Add User</Button>
+        <div className="flex gap-3">
+          <Dialog open={bugDialogOpen} onOpenChange={setBugDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <Bug className="w-4 h-4" />
+                Report Issue
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Bug className="w-5 h-5 text-red-500" />
+                  Report an Issue
+                </DialogTitle>
+                <DialogDescription>
+                  Found a bug? Describe the issue and our AI agents will analyze and fix it automatically.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="bug-description">Bug Description *</Label>
+                  <Textarea
+                    id="bug-description"
+                    placeholder="Describe the bug you encountered (e.g., 'Expenses are always split by 5 instead of actual participant count')"
+                    value={bugReport.description}
+                    onChange={(e) => setBugReport(prev => ({...prev, description: e.target.value}))}
+                    className="min-h-[100px]"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="bug-priority">Priority</Label>
+                    <Select
+                      value={bugReport.priority}
+                      onValueChange={(value) => setBugReport(prev => ({...prev, priority: value}))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="critical">Critical</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="bug-steps">Steps to Reproduce (Optional)</Label>
+                  <Textarea
+                    id="bug-steps"
+                    placeholder="1. Add 3 users&#10;2. Create expense for $30&#10;3. Notice it shows $6 per person instead of $10"
+                    value={bugReport.steps}
+                    onChange={(e) => setBugReport(prev => ({...prev, steps: e.target.value}))}
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="bug-expected">Expected Behavior (Optional)</Label>
+                    <Textarea
+                      id="bug-expected"
+                      placeholder="Each person should pay $10"
+                      value={bugReport.expected}
+                      onChange={(e) => setBugReport(prev => ({...prev, expected: e.target.value}))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="bug-actual">Actual Behavior (Optional)</Label>
+                    <Textarea
+                      id="bug-actual"
+                      placeholder="Each person pays $6"
+                      value={bugReport.actual}
+                      onChange={(e) => setBugReport(prev => ({...prev, actual: e.target.value}))}
+                    />
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setBugDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleBugReport}
+                  disabled={isReportingBug || !bugReport.description.trim()}
+                  className="flex items-center gap-2"
+                >
+                  {isReportingBug ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      Submit Report
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          <Button onClick={handleAddUser}>Add User</Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -360,7 +545,7 @@ export default function Home() {
                       </div>
                       <div className="text-sm text-gray-600">
                         <p>Split with: {expense.participants.map(p => p.user.name).join(", ")}</p>
-                        <p>Each owes: ₹{(expense.amount / 5).toFixed(2)}</p>
+                        <p>Each owes: ₹{expense.participants.length > 0 ? (expense.amount / 5).toFixed(2) : '0.00'}</p>
                       </div>
                     </div>
                   ))}
