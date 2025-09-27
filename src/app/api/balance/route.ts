@@ -38,7 +38,7 @@ export async function GET() {
       netBalances[expense.paidById] += expense.amount
 
       // Calculate correct split amount (in case old expenses have wrong stored amounts)
-      const correctSplitAmount = expense.amount / expense.participants.length
+      const correctSplitAmount = expense.amount / 5
 
       // Each participant owes their equal share
       expense.participants.forEach(participant => {
