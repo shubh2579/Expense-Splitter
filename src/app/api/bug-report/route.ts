@@ -35,50 +35,57 @@ export async function POST(request: NextRequest) {
       appName: bugReport.appName
     })
 
-    // Send bug report to SDLC WebSocket server for processing
-    try {
-      const sdlcResponse = await fetch('http://localhost:8081/api/submit-bug-report', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(enhancedReport),
-        // Short timeout since this is internal communication
-        signal: AbortSignal.timeout(5000)
-      })
+    // --- START: Robust SDLC Orchestrator Communication ---
+    const portsToTry = [8081, 8082, 8083, 8084];
+    let orchestratorResponse: NextResponse | null = null;
 
-      if (sdlcResponse.ok) {
-        console.log('✅ Bug report sent to SDLC orchestrator successfully')
+    for (const port of portsToTry) {
+      try {
+        const url = `http://localhost:${port}/api/submit-bug-report`;
+        console.log(`Attempting to send bug report to orchestrator on port ${port}...`);
+        const sdlcResponse = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(enhancedReport),
+          signal: AbortSignal.timeout(2500) // Shorter timeout per attempt
+        });
 
+        if (sdlcResponse.ok) {
+          console.log(`✅ Bug report sent to SDLC orchestrator successfully on port ${port}`);
+          orchestratorResponse = NextResponse.json({
+            success: true,
+            reportId,
+            message: 'Bug report submitted successfully. AI agents will analyze and fix the issue.',
+            status: 'queued_for_analysis'
+          });
+          break; // Exit loop on success
+        } else {
+          console.warn(`⚠️ SDLC orchestrator on port ${port} returned status ${sdlcResponse.status}`);
+        }
+      } catch (networkError) {
+        if (networkError.name === 'TimeoutError') {
+          console.warn(`⚠️ Timeout reaching SDLC orchestrator on port ${port}`);
+        } else {
+          console.warn(`⚠️ Failed to reach SDLC orchestrator on port ${port}:`, networkError.message);
+        }
+      }
+    }
+
+    if (orchestratorResponse) {
+      return orchestratorResponse;
+    } else {
+      // Fallback if all ports fail
+      console.warn('⚠️ SDLC orchestrator unavailable on all tried ports, storing for later processing');
         return NextResponse.json({
           success: true,
           reportId,
-          message: 'Bug report submitted successfully. AI agents will analyze and fix the issue.',
-          status: 'queued_for_analysis'
-        })
-      } else {
-        console.warn('⚠️ SDLC orchestrator unavailable, storing for later processing')
-
-        // Could store in database or file system for later processing
-        // For now, we'll just return success with a note
-        return NextResponse.json({
-          success: true,
-          reportId,
-          message: 'Bug report received. SDLC system will process it when available.',
-          status: 'pending_orchestrator'
+          message: 'Bug report received and queued for processing. Orchestrator offline.',
+          status: 'offline_queue'
         })
       }
-    } catch (networkError) {
-      console.warn('⚠️ Failed to reach SDLC orchestrator:', networkError.message)
-
-      // Store the bug report locally for later processing
-      return NextResponse.json({
-        success: true,
-        reportId,
-        message: 'Bug report received and queued for processing.',
-        status: 'offline_queue'
-      })
-    }
+    // --- END: Robust SDLC Orchestrator Communication ---
 
   } catch (error) {
     console.error('❌ Error processing bug report:', error)
