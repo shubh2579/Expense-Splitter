@@ -1,0 +1,8 @@
+{
+  "ticket_key": "URLSHORT-123",
+  "priority": "High",
+  "sprint": "Current sprint",
+  "assignee": "DevOps + Backend developer",
+  "status": "Open",
+  "tracking_info": "Issue created for balance summary bug"
+}
