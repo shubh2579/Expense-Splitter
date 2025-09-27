@@ -64,4 +64,15 @@ describe("POST function", () => {
       }
     })
   })
+
+  it("should handle scenario with no participants", async () => {
+    mockRequest.json.mockResolvedValue({
+      description: "Test Expense",
+      amount: 100,
+      paidById: "user123",
+      participantIds: []
+    })
+    await POST(mockRequest as NextRequest)
+    expect(NextResponse.json).toHaveBeenCalledWith({ error: "All fields are required and at least one participant is needed" }, { status: 400 })
+  })
 })
