@@ -9,4 +9,11 @@ describe('Expense Calculation', () => {
     const result = calculateExpense(amount, participantIds);
     expect(result).toBe(20);
   });
+
+  it('should handle empty participantIds array', () => {
+    const amount = 100;
+    const participantIds = [];
+    const result = calculateExpense(amount, participantIds);
+    expect(result).toBe(0);
+  });
 });
