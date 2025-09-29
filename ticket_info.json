@@ -1,0 +1,8 @@
+{
+  "ticket_key": "URLSHORT-123",
+  "priority": "Medium",
+  "sprint": "Next Sprint",
+  "assignee": "Backend developer",
+  "status": "Open",
+  "tracking_info": "Ticket created for bugfix related to recent expenses division issue"
+}
