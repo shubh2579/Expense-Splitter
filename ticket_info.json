@@ -1,0 +1,8 @@
+{
+  "ticket_key": "EXPENSE-123",
+  "priority": "High",
+  "sprint": "Next Sprint",
+  "assignee": "Backend Developer",
+  "status": "Open",
+  "tracking_info": "https://example.com/tracking/EXPENSE-123"
+}
