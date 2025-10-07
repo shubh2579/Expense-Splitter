@@ -3,14 +3,10 @@ import { v4 as uuidv4 } from 'uuid'
 
 interface BugReport {
   description: string
-  priority: 'low' | 'medium' | 'high' | 'critical'
-  steps?: string
-  expected?: string
-  actual?: string
-  projectPath: string
-  reportedAt: string
-  appName: string
-  userAgent: string
+  priority?: 'low' | 'medium' | 'high' | 'critical'
+  logs?: string
+  projectPath?: string
+  appName?: string
 }
 
 export async function POST(request: NextRequest) {
@@ -22,9 +18,13 @@ export async function POST(request: NextRequest) {
 
     // Enhanced bug report with metadata
     const enhancedReport = {
-      ...bugReport,
-      reportId,
-      status: 'submitted',
+      id: reportId,
+      description: bugReport.description,
+      priority: bugReport.priority || 'medium',
+      logs: bugReport.logs || '',
+      projectPath: bugReport.projectPath || '/mnt/c/Users/shubhendusharma/Downloads/claude_code_sdlc/projects/Expense-Splitter',
+      appName: bugReport.appName || 'Expense-Splitter',
+      status: 'pending',
       submittedAt: new Date().toISOString()
     }
 
@@ -35,57 +35,40 @@ export async function POST(request: NextRequest) {
       appName: bugReport.appName
     })
 
-    // --- START: Robust SDLC Orchestrator Communication ---
-    const portsToTry = [8081, 8082, 8083, 8084];
-    let orchestratorResponse: NextResponse | null = null;
+    // Send to Nagarro SDLC Dashboard
+    try {
+      const dashboardUrl = 'http://localhost:8082/api/submit-bug-report';
+      console.log(`📤 Sending to Nagarro SDLC Dashboard...`);
 
-    for (const port of portsToTry) {
-      try {
-        const url = `http://localhost:${port}/api/submit-bug-report`;
-        console.log(`Attempting to send bug report to orchestrator on port ${port}...`);
-        const sdlcResponse = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(enhancedReport),
-          signal: AbortSignal.timeout(2500) // Shorter timeout per attempt
-        });
+      const response = await fetch(dashboardUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(enhancedReport),
+        signal: AbortSignal.timeout(5000)
+      });
 
-        if (sdlcResponse.ok) {
-          console.log(`✅ Bug report sent to SDLC orchestrator successfully on port ${port}`);
-          orchestratorResponse = NextResponse.json({
-            success: true,
-            reportId,
-            message: 'Bug report submitted successfully. AI agents will analyze and fix the issue.',
-            status: 'queued_for_analysis'
-          });
-          break; // Exit loop on success
-        } else {
-          console.warn(`⚠️ SDLC orchestrator on port ${port} returned status ${sdlcResponse.status}`);
-        }
-      } catch (networkError) {
-        if (networkError.name === 'TimeoutError') {
-          console.warn(`⚠️ Timeout reaching SDLC orchestrator on port ${port}`);
-        } else {
-          console.warn(`⚠️ Failed to reach SDLC orchestrator on port ${port}:`, networkError.message);
-        }
-      }
-    }
-
-    if (orchestratorResponse) {
-      return orchestratorResponse;
-    } else {
-      // Fallback if all ports fail
-      console.warn('⚠️ SDLC orchestrator unavailable on all tried ports, storing for later processing');
+      if (response.ok) {
+        console.log(`✅ Bug report sent to Nagarro SDLC Dashboard successfully`);
         return NextResponse.json({
           success: true,
           reportId,
-          message: 'Bug report received and queued for processing. Orchestrator offline.',
-          status: 'offline_queue'
-        })
+          message: 'Bug report submitted to Nagarro SDLC Dashboard. Awaiting approval.',
+          status: 'pending_approval'
+        });
+      } else {
+        throw new Error(`Dashboard returned status ${response.status}`);
       }
-    // --- END: Robust SDLC Orchestrator Communication ---
+    } catch (error) {
+      console.warn('⚠️ Nagarro SDLC Dashboard unavailable:', error.message);
+      return NextResponse.json({
+        success: true,
+        reportId,
+        message: 'Bug report received. Dashboard offline - will process when available.',
+        status: 'offline_queue'
+      });
+    }
 
   } catch (error) {
     console.error('❌ Error processing bug report:', error)
