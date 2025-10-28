@@ -1,0 +1,44 @@
+# Claude Code ignore patterns
+# This file tells Claude Code which directories/files to skip during searches
+
+# Dependencies
+node_modules/
+.pnp/
+.yarn/
+
+# Build outputs
+.next/
+build/
+dist/
+out/
+.cache/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.*
+
+# Git
+.git/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
